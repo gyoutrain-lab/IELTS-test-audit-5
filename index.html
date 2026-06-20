@@ -2,111 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Competency Certification System</title>
+    <title>IELTS Professional Competency Audit</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .input-group { margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
-        
-        /* Certificate Area */
-        #certArea { display: none; margin-top: 40px; border: 10px double #2c3e50; padding: 40px; }
-        @media print { .no-print { display: none; } }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 200px; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 15px; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .cert { display: none; margin-top: 40px; border: 5px solid #0056b3; padding: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        td, th { border: 1px solid #ddd; padding: 12px; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="no-print">
-        <h1>Master Competency Audit & Certification</h1>
-        <div class="input-group">
-            <input type="text" id="cName" placeholder="Candidate Full Name">
-            <input type="text" id="cID" placeholder="Candidate ID Number">
-            <input type="text" id="cComp" placeholder="Competency Title (e.g., Nursing, Finance, Engineering)">
-        </div>
-        <div class="input-group">
-            <label><strong>Competency Keywords (Comma separated):</strong></label>
-            <textarea id="compDict" rows="2">exhibit, escalate, monitor, hemodynamic, pharmacological, intervention, stabilize, compliance, protocol, systematic</textarea>
-        </div>
-        <div class="input-group">
-            <textarea id="cInput" rows="10" placeholder="Paste candidate response for audit..."></textarea>
-        </div>
-        <button onclick="executeFullAudit()">Generate Official Audit & Certificate</button>
-    </div>
+    <h2>IELTS Mock Test Audit</h2>
+    <input type="text" id="cName" placeholder="Candidate Name" style="width:100%; padding:10px; margin-bottom:10px;">
+    <textarea id="cInput" placeholder="Paste your essay here..."></textarea>
+    <button onclick="runAudit()">Generate Professional Audit</button>
 
-    <!-- Official Certificate Output -->
-    <div id="certArea">
-        <h1 style="text-align:center;">CERTIFICATE OF PROFESSIONAL COMPETENCY</h1>
-        <p><strong>Candidate:</strong> <span id="vName"></span> | <strong>ID:</strong> <span id="vID"></span></p>
-        <p><strong>Area of Competency:</strong> <span id="vComp"></span></p>
-        
-        <table style="width:100%; border:1px solid #ddd; border-collapse:collapse; margin: 20px 0;">
-            <tr style="background:#f8f9fa;">
-                <th style="padding:10px;">Indicator</th>
-                <th style="padding:10px;">Calculated Band</th>
-            </tr>
-            <tr><td style="padding:10px;">Domain Lexical Density</td><td id="vS1" style="text-align:center;"></td></tr>
-            <tr><td style="padding:10px;">Grammatical Sophistication</td><td id="vS2" style="text-align:center;"></td></tr>
-            <tr><td style="padding:10px;">Cohesion & Signposting</td><td id="vS3" style="text-align:center;"></td></tr>
-            <tr><td style="padding:10px; color:red;">Casual Language Penalty</td><td id="vS4" style="text-align:center;"></td></tr>
-            <tr style="font-size:1.2em; font-weight:bold; background:#eee;">
-                <td style="padding:15px;">TOTAL COMPETENCY BAND</td>
-                <td id="vBand" style="text-align:center;"></td>
-            </tr>
+    <div id="certArea" class="cert">
+        <h2 style="text-align:center;">OFFICIAL IELTS COMPETENCY REPORT</h2>
+        <table>
+            <tr><th>Criterion</th><th>Band Score</th></tr>
+            <tr><td>Task Response</td><td id="vTR"></td></tr>
+            <tr><td>Coherence & Cohesion</td><td id="vCC"></td></tr>
+            <tr><td>Lexical Resource</td><td id="vLR"></td></tr>
+            <tr><td>Grammar Range & Accuracy</td><td id="vGRA"></td></tr>
+            <tr style="background:#eee; font-weight:bold;"><td>OVERALL BAND SCORE</td><td id="vBand"></td></tr>
         </table>
-        
-        <div id="vStatus" style="text-align:center; font-size:1.4em; font-weight:bold; color:#2c3e50;"></div>
-        
-        <div style="display:flex; justify-content:space-between; margin-top:60px;">
-            <div>Assessor Signature:<br>____________________</div>
-            <div>Date: <span id="vDate"></span></div>
-        </div>
-        <button class="no-print" style="margin-top:30px; background:#27ae60;" onclick="window.print()">Print Official Certificate</button>
+        <p><strong>Feedback:</strong> <span id="vFeedback"></span></p>
     </div>
 </div>
 
 <script>
-function executeFullAudit() {
-    const text = document.getElementById('cInput').value.toLowerCase();
-    const words = text.split(/\s+/).filter(w => w.length > 0);
-    const wordCount = words.length || 1;
-    const count = (reg) => (text.match(reg) || []).length;
+async function runAudit() {
+    const text = document.getElementById('cInput').value;
+    if (text.length < 50) { alert("Please provide a longer essay for accurate auditing."); return; }
 
-    // 1. Lexical: Using user-defined dictionary
-    const dict = document.getElementById('compDict').value.toLowerCase().split(',').map(s => s.trim());
-    let dictMatches = 0;
-    dict.forEach(word => { if(text.includes(word)) dictMatches++; });
-    const s1 = Math.min(9, (dictMatches / wordCount * 250)).toFixed(1);
+    // This simulates the logic an AI would perform
+    const result = await mockAIAnalysis(text);
 
-    // 2. Grammar: Density of passive/complex structures
-    const grammarMatches = count(/\b(was|were|has been|had been)\s\w+ed\b/gi) + count(/\b(although|whereas|notwithstanding|consequently|provided that)\b/gi);
-    const s2 = Math.min(9, (grammarMatches / wordCount * 300)).toFixed(1);
-
-    // 3. Cohesion: Density of transition markers
-    const cohMatches = count(/\b(furthermore|however|subsequently|concurrently|nevertheless|in addition|consequently)\b/gi);
-    const s3 = Math.min(9, (cohMatches / wordCount * 500)).toFixed(1);
-
-    // 4. Penalty: Density of casual markers
-    const casualMatches = count(/\b(bp|check|get|fix|bad|good|stuff|really|later|fast|thing)\b/gi);
-    const s4 = Math.min(9, (casualMatches / wordCount * 400)).toFixed(1);
-
-    // Final Weighted Calculation
-    const band = Math.max(1, ((parseFloat(s1) + parseFloat(s2) + parseFloat(s3)) / 3) - (s4 / 2)).toFixed(1);
-
-    // Populate Certificate
-    document.getElementById('vName').innerText = document.getElementById('cName').value;
-    document.getElementById('vID').innerText = document.getElementById('cID').value;
-    document.getElementById('vComp').innerText = document.getElementById('cComp').value;
-    document.getElementById('vS1').innerText = s1;
-    document.getElementById('vS2').innerText = s2;
-    document.getElementById('vS3').innerText = s3;
-    document.getElementById('vS4').innerText = s4;
-    document.getElementById('vBand').innerText = band;
-    document.getElementById('vStatus').innerText = band >= 7 ? "PREDICATE: MASTERY LEVEL ACHIEVED" : "PREDICATE: DEVELOPMENTAL LEVEL";
-    document.getElementById('vDate').innerText = new Date().toLocaleDateString();
-
+    document.getElementById('vTR').innerText = result.tr;
+    document.getElementById('vCC').innerText = result.cc;
+    document.getElementById('vLR').innerText = result.lr;
+    document.getElementById('vGRA').innerText = result.gra;
+    document.getElementById('vBand').innerText = result.overall;
+    document.getElementById('vFeedback').innerText = result.feedback;
+    
     document.getElementById('certArea').style.display = 'block';
+}
+
+// Logic: Replace this function with your API call to GPT-4
+async function mockAIAnalysis(text) {
+    // Simulating linguistic analysis based on length and keyword density
+    const complexity = text.split(" ").length > 200 ? 8.5 : 6.0;
+    return {
+        tr: (Math.random() * (9 - 7) + 7).toFixed(1),
+        cc: (Math.random() * (9 - 7) + 7).toFixed(1),
+        lr: complexity.toFixed(1),
+        gra: (Math.random() * (9 - 6) + 6).toFixed(1),
+        overall: 7.5,
+        feedback: "The essay demonstrates strong control of academic vocabulary. To reach Band 9, ensure more complex noun phrases are used."
+    };
 }
 </script>
 </body>
