@@ -1,69 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Universal Competency Audit v7.0</title>
+    <meta charset="UTF-8">
+    <title>Professional Competency Certification System</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: auto; padding: 30px; background: #f0f2f5; }
-        .panel { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        textarea, input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
-        .audit-results { margin-top: 25px; border-top: 2px solid #333; padding-top: 20px; }
-        .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        
+        /* Certificate Area */
+        #certArea { display: none; margin-top: 40px; border: 10px double #2c3e50; padding: 40px; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
 
-<div class="panel">
-    <h1>Universal Competency Audit</h1>
-    <input type="text" id="compName" placeholder="Competency Name (e.g., Finance, Engineering, Healthcare)">
-    <textarea id="masterDict" placeholder="Enter comma-separated 'Mastery Keywords' for this competency (e.g., compliance, strategy, fiscal, methodology, infrastructure)"></textarea>
-    <textarea id="cInput" rows="8" placeholder="Paste candidate response here..."></textarea>
-    <button onclick="runUniversalAudit()" style="width:100%; padding:15px; background:#1a2a6c; color:white; border:none; cursor:pointer;">EXECUTE AUDIT</button>
-
-    <div id="results" class="audit-results" style="display:none;">
-        <h3>Audit Summary: <span id="rComp"></span></h3>
-        <div class="score-grid">
-            <div style="background:#f9f9f9; padding:15px;">Domain Lexicon: <span id="s1"></span>/9</div>
-            <div style="background:#f9f9f9; padding:15px;">Grammar Logic: <span id="s2"></span>/9</div>
-            <div style="background:#f9f9f9; padding:15px;">Cohesion: <span id="s3"></span>/9</div>
-            <div style="background:#f9f9f9; padding:15px; color:red;">Penalty Points: <span id="s4"></span></div>
+<div class="container">
+    <div class="no-print">
+        <h1>Master Competency Audit & Certification</h1>
+        <div class="input-group">
+            <input type="text" id="cName" placeholder="Candidate Full Name">
+            <input type="text" id="cID" placeholder="Candidate ID Number">
+            <input type="text" id="cComp" placeholder="Competency Title (e.g., Nursing, Finance, Engineering)">
         </div>
-        <h2 style="text-align:center;">Final Competency Band: <span id="finalBand"></span></h2>
+        <div class="input-group">
+            <label><strong>Competency Keywords (Comma separated):</strong></label>
+            <textarea id="compDict" rows="2">exhibit, escalate, monitor, hemodynamic, pharmacological, intervention, stabilize, compliance, protocol, systematic</textarea>
+        </div>
+        <div class="input-group">
+            <textarea id="cInput" rows="10" placeholder="Paste candidate response for audit..."></textarea>
+        </div>
+        <button onclick="executeFullAudit()">Generate Official Audit & Certificate</button>
+    </div>
+
+    <!-- Official Certificate Output -->
+    <div id="certArea">
+        <h1 style="text-align:center;">CERTIFICATE OF PROFESSIONAL COMPETENCY</h1>
+        <p><strong>Candidate:</strong> <span id="vName"></span> | <strong>ID:</strong> <span id="vID"></span></p>
+        <p><strong>Area of Competency:</strong> <span id="vComp"></span></p>
+        
+        <table style="width:100%; border:1px solid #ddd; border-collapse:collapse; margin: 20px 0;">
+            <tr style="background:#f8f9fa;">
+                <th style="padding:10px;">Indicator</th>
+                <th style="padding:10px;">Calculated Band</th>
+            </tr>
+            <tr><td style="padding:10px;">Domain Lexical Density</td><td id="vS1" style="text-align:center;"></td></tr>
+            <tr><td style="padding:10px;">Grammatical Sophistication</td><td id="vS2" style="text-align:center;"></td></tr>
+            <tr><td style="padding:10px;">Cohesion & Signposting</td><td id="vS3" style="text-align:center;"></td></tr>
+            <tr><td style="padding:10px; color:red;">Casual Language Penalty</td><td id="vS4" style="text-align:center;"></td></tr>
+            <tr style="font-size:1.2em; font-weight:bold; background:#eee;">
+                <td style="padding:15px;">TOTAL COMPETENCY BAND</td>
+                <td id="vBand" style="text-align:center;"></td>
+            </tr>
+        </table>
+        
+        <div id="vStatus" style="text-align:center; font-size:1.4em; font-weight:bold; color:#2c3e50;"></div>
+        
+        <div style="display:flex; justify-content:space-between; margin-top:60px;">
+            <div>Assessor Signature:<br>____________________</div>
+            <div>Date: <span id="vDate"></span></div>
+        </div>
+        <button class="no-print" style="margin-top:30px; background:#27ae60;" onclick="window.print()">Print Official Certificate</button>
     </div>
 </div>
 
 <script>
-function runUniversalAudit() {
+function executeFullAudit() {
     const text = document.getElementById('cInput').value.toLowerCase();
-    const dict = document.getElementById('masterDict').value.toLowerCase().split(',').map(s => s.trim());
-    
-    // 1. Lexical: Count occurrences of your specific dictionary terms
-    let lexicalCount = 0;
-    dict.forEach(word => { if(text.includes(word)) lexicalCount++; });
-    const s1 = Math.min(9, lexicalCount * 1.5).toFixed(1);
+    const words = text.split(/\s+/).filter(w => w.length > 0);
+    const wordCount = words.length || 1;
+    const count = (reg) => (text.match(reg) || []).length;
 
-    // 2. Grammar: Universal academic markers (Passive/Conditionals)
-    const grammarMatches = (text.match(/\b(was|were|has been|had been)\s\w+ed\b/gi) || []).length + 
-                           (text.match(/\b(although|whereas|notwithstanding|consequently|provided that)\b/gi) || []).length;
-    const s2 = Math.min(9, 4 + (grammarMatches * 0.8)).toFixed(1);
+    // 1. Lexical: Using user-defined dictionary
+    const dict = document.getElementById('compDict').value.toLowerCase().split(',').map(s => s.trim());
+    let dictMatches = 0;
+    dict.forEach(word => { if(text.includes(word)) dictMatches++; });
+    const s1 = Math.min(9, (dictMatches / wordCount * 250)).toFixed(1);
 
-    // 3. Cohesion: Logical markers
-    const cohMatches = (text.match(/\b(furthermore|however|subsequently|concurrently|nevertheless|in addition)\b/gi) || []).length;
-    const s3 = Math.min(9, 4 + (cohMatches * 0.8)).toFixed(1);
+    // 2. Grammar: Density of passive/complex structures
+    const grammarMatches = count(/\b(was|were|has been|had been)\s\w+ed\b/gi) + count(/\b(although|whereas|notwithstanding|consequently|provided that)\b/gi);
+    const s2 = Math.min(9, (grammarMatches / wordCount * 300)).toFixed(1);
 
-    // 4. Penalty: Informal/Casual markers (Universal)
-    const casualMatches = (text.match(/\b(check|good|bad|get|fix|later|hard|fast|stuff|really|thing|lots)\b/gi) || []).length;
-    const s4 = Math.min(9, casualMatches * 1.2).toFixed(1);
+    // 3. Cohesion: Density of transition markers
+    const cohMatches = count(/\b(furthermore|however|subsequently|concurrently|nevertheless|in addition|consequently)\b/gi);
+    const s3 = Math.min(9, (cohMatches / wordCount * 500)).toFixed(1);
 
-    // Final Calculation
-    const band = Math.max(1, ((parseFloat(s1) + parseFloat(s2) + parseFloat(s3)) / 3) - (s4 / 4)).toFixed(1);
+    // 4. Penalty: Density of casual markers
+    const casualMatches = count(/\b(bp|check|get|fix|bad|good|stuff|really|later|fast|thing)\b/gi);
+    const s4 = Math.min(9, (casualMatches / wordCount * 400)).toFixed(1);
 
-    document.getElementById('rComp').innerText = document.getElementById('compName').value;
-    document.getElementById('s1').innerText = s1;
-    document.getElementById('s2').innerText = s2;
-    document.getElementById('s3').innerText = s3;
-    document.getElementById('s4').innerText = s4;
-    document.getElementById('finalBand').innerText = band;
-    document.getElementById('results').style.display = 'block';
+    // Final Weighted Calculation
+    const band = Math.max(1, ((parseFloat(s1) + parseFloat(s2) + parseFloat(s3)) / 3) - (s4 / 2)).toFixed(1);
+
+    // Populate Certificate
+    document.getElementById('vName').innerText = document.getElementById('cName').value;
+    document.getElementById('vID').innerText = document.getElementById('cID').value;
+    document.getElementById('vComp').innerText = document.getElementById('cComp').value;
+    document.getElementById('vS1').innerText = s1;
+    document.getElementById('vS2').innerText = s2;
+    document.getElementById('vS3').innerText = s3;
+    document.getElementById('vS4').innerText = s4;
+    document.getElementById('vBand').innerText = band;
+    document.getElementById('vStatus').innerText = band >= 7 ? "PREDICATE: MASTERY LEVEL ACHIEVED" : "PREDICATE: DEVELOPMENTAL LEVEL";
+    document.getElementById('vDate').innerText = new Date().toLocaleDateString();
+
+    document.getElementById('certArea').style.display = 'block';
 }
 </script>
 </body>
